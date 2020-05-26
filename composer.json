@@ -1,0 +1,6 @@
+{
+    "name": "manni/wpthme",
+    "require": {
+        "ext-imagick": "*"
+    }
+}
