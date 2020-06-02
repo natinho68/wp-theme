@@ -105,9 +105,81 @@ function manniInit()
     ]);
 }
 
+function get_menu()
+{
+    # Change 'menu' to your own navigation slug.
+    // wordpress does not group child menu items with parent menu items
+    $navbar_items = wp_get_nav_menu_items('Navigation');
+    $child_items = [];
+
+    // pull all child menu items into separate object
+    foreach ($navbar_items as $key => $item) {
+        if ($item->menu_item_parent) {
+            array_push($child_items, $item);
+            unset($navbar_items[$key]);
+        }
+    }
+
+    // push child items into their parent item in the original object
+    foreach ($navbar_items as $item) {
+        foreach ($child_items as $key => $child) {
+            if ($child->menu_item_parent == $item->post_name) {
+                if (!$item->child_items) {
+                    $item->child_items = [];
+                }
+
+                array_push($item->child_items, $child);
+                unset($child_items[$key]);
+            }
+        }
+    }
+
+    // return navbar object where child items are grouped with parents
+    return $navbar_items;
+}
+
+/**
+ * Get menus in api
+ */
+function register_menu_route()
+{
+    register_rest_route('wp-utils', '/menus', array(
+        'methods' => 'GET',
+        'callback' => 'get_menu',
+    ));
+}
+
+
+function register_rest_images()
+{
+    register_rest_field(
+        ['post'],
+        'thumbnail',
+        [
+            'get_callback' => 'get_rest_featured_image',
+            'update_callback' => null,
+            'schema' => null,
+        ]
+    );
+}
+
+function get_rest_featured_image($object, $field_name, $request)
+{
+    if ($object['featured_media']) {
+        $img = [
+            'cardHeader' => wp_get_attachment_image_src($object['featured_media'], 'card-header')[0],
+            'original' => wp_get_attachment_image_src($object['featured_media'], 'original')[0]
+        ];
+        return $img;
+    }
+    return false;
+}
+
 /**
  * Activation hooks
  */
+add_action('rest_api_init', 'register_rest_images');
+add_action('rest_api_init', 'register_menu_route');
 add_action('init', 'manniInit');
 add_action('after_setup_theme', 'manniSupport');
 add_action('wp_enqueue_scripts', 'manniRegisterAssets');

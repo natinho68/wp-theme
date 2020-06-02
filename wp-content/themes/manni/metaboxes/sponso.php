@@ -12,6 +12,10 @@ class SponsoMetabox
     {
         add_action('add_meta_boxes', [self::class, 'add'], 10, 2);
         add_action('save_post', [self::class, 'save']);
+        register_meta('post', 'manniSponso', [
+            'object_subtype' => 'post',
+            'show_in_rest' => true
+        ]);
     }
 
     /**
